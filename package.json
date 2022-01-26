@@ -1,0 +1,22 @@
+{
+  "name": "sacr-dashboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alessandro-marcantoni/sacr-dashboard.git"
+  },
+  "author": "Alessandro Marcantoni <alessandro.marcantoni.98@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alessandro-marcantoni/sacr-dashboard/issues"
+  },
+  "homepage": "https://github.com/alessandro-marcantoni/sacr-dashboard#readme",
+  "dependencies": {
+    "aws-iot-device-sdk": "^2.2.11"
+  }
+}
