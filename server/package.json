@@ -17,6 +17,12 @@
   },
   "homepage": "https://github.com/alessandro-marcantoni/sacr-dashboard#readme",
   "dependencies": {
-    "aws-iot-device-sdk": "^2.2.11"
+    "aws-iot-device-sdk": "^2.2.11",
+    "cors": "^2.8.5",
+    "express": "^4.17.2",
+    "mongoose": "^6.1.8"
+  },
+  "devDependencies": {
+    "dotenv": "^14.3.2"
   }
 }
