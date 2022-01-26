@@ -1,3 +1,11 @@
+# AWS
+*.key
+*.pem
+*.crt
+
+# Idea
+.idea
+
 # Logs
 logs
 *.log
