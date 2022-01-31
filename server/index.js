@@ -2,6 +2,14 @@ require("dotenv").config()
 const awsIoT = require("aws-iot-device-sdk")
 const mongoose = require("mongoose")
 const express = require("express")
+const app = express()
+const server = require("http").createServer(app)
+const { Server } = require("socket.io")
+const io = new Server(server,  {
+  cors: {
+    origins: "*"
+  }
+})
 const cors = require("cors")
 
 mongoose.connect(process.env.VC19_MONGODB_URL)
@@ -10,11 +18,18 @@ mongoose.connect(process.env.VC19_MONGODB_URL)
 const TempHumidity = require("./models/TempHumidity")(mongoose)
 const AirQuality = require("./models/AirQuality")(mongoose)
 
+io.on("connection", socket => {
+  console.log("User connected to socket " + socket)
+  io.on("disconnect", () => {
+    console.log("User disconnected")
+  })
+})
+
 const device = awsIoT.device({
-  keyPath: "bc987f6281-private.pem.key",
-  certPath: "bc987f6281-certificate.pem.crt",
+  keyPath: "c6c7f9c1b8-private.pem.key",
+  certPath: "c6c7f9c1b8-certificate.pem.crt",
   caPath: "AmazonRootCA1.pem",
-  clientId: "sacr-dashboard",
+  clientId: "sacr-dashboard-2",
   host: "a1agd712iaea4u-ats.iot.us-east-1.amazonaws.com",
 })
 
@@ -25,15 +40,20 @@ device.on('connect', () => {
 
 device.on('message', (topic, payload) => {
   if (topic === "temperature_humidity") {
-    const record = new TempHumidity(JSON.parse(payload.toString()))
+    const r = JSON.parse(payload.toString())
+    const record = new TempHumidity(r)
     /*record.save((error, _error) => {
       if (error) console.error(error);
     })*/
+    io.emit("tempHumidity", {
+      time: r.time,
+      temperature: r.temperature,
+      humidity: r.humidity,
+    })
   }
   console.log('message', topic, payload.toString());
 })
 
-const app = express()
 const port = 3000
 
 app.use(cors({
@@ -50,6 +70,6 @@ app.get("/temperatureHumidity", (_req, res) => {
   })
 })
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log("Listening on port " + port)
 })

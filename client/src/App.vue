@@ -1,5 +1,11 @@
 <template>
-  <TempHumidity></TempHumidity>
+  <div class="container-fluid mt-5">
+    <div class="row">
+      <div class="col-6 p-5">
+        <TempHumidity></TempHumidity>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -9,7 +15,7 @@ export default {
   name: 'App',
   components: {
     TempHumidity,
-  }
+  },
 }
 </script>
 
