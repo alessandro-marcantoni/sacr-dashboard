@@ -1,5 +1,5 @@
 <template>
-  <div id="tempHumidity"></div>
+  <div id="temperature" class="p-2 rounded shadow bg-white"></div>
 </template>
 
 <script>
@@ -7,13 +7,12 @@ import {host, socket} from "@/main";
 import Anychart from "anychart"
 
 export default {
-  name: "TempHumidity",
+  name: "Temperature",
   data() {
     return {
       records: [],
       temperature: undefined,
-      humidity: undefined,
-      chart: Anychart.line(),
+      chart: Anychart.area(),
     }
   },
   methods: {
@@ -29,29 +28,26 @@ export default {
               r.temperature
             ]
           }))
-          this.humidity = Anychart.data.set(this.records.map(r => {
-            return [
-              r.time.toLocaleString().slice(11, 19),
-              r.humidity
-            ]
-          }))
           this.plotChart()
-          console.log(this.temperature.data())
         })
     },
     plotChart() {
-      this.chart.line(this.humidity).name("Humidity")
-      this.chart.line(this.temperature).name("Temperature")
-      this.chart.yAxis().title("Temperature and Humidity")
+      const series = this.chart.area(this.temperature)
+      series.name("Temperature")
+      this.chart.yAxis().title("Temperature (°C)")
       this.chart.xAxis().title("Time")
-      this.chart.container("tempHumidity")
+      this.chart.yScale().minimum(0)
+      this.chart.yScale().maximum(40)
+      this.chart.xScale().mode("continuous")
+      this.chart.container("temperature")
       this.chart.height(400)
+      this.chart.title("Temperature")
+      series.color("#64BB62")
       this.chart.draw()
     },
   },
   mounted: function() {
     socket.on("tempHumidity", (msg) => {
-      this.humidity.append([msg.time.toLocaleString().slice(11, 19), msg.humidity])
       this.temperature.append([msg.time.toLocaleString().slice(11, 19), msg.temperature])
     })
     this.init()
@@ -61,7 +57,7 @@ export default {
 </script>
 
 <style>
-#tempHumidity, #tempHumidity > div, svg {
+#temperature, #temperature > div, svg {
   min-height: 400px !important;
 }
 

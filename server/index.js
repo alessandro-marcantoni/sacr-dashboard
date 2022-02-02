@@ -36,6 +36,7 @@ const device = awsIoT.device({
 device.on('connect', () => {
   console.log('Thing connected')
   device.subscribe("temperature_humidity")
+  device.subscribe("air_quality")
 })
 
 device.on('message', (topic, payload) => {
@@ -49,6 +50,16 @@ device.on('message', (topic, payload) => {
       time: r.time,
       temperature: r.temperature,
       humidity: r.humidity,
+    })
+  } else if (topic === "air_quality") {
+    const r = JSON.parse(payload.toString())
+    const record = new AirQuality(r)
+    record.save((error, _error) => {
+      if (error) console.error(error);
+    })
+    io.emit("airQuality", {
+      time: r.time,
+      concentration: r.concentration,
     })
   }
   console.log('message', topic, payload.toString());
@@ -66,7 +77,13 @@ app.use(express.urlencoded({ extended: true }))
 
 app.get("/temperatureHumidity", (_req, res) => {
   TempHumidity.find({}, (_error, result) => {
-    res.send(result)
+    res.json(result)
+  })
+})
+
+app.get("/airQuality", (_req, res) => {
+  AirQuality.find({}, (_error, result) => {
+    res.json(result)
   })
 })
 
