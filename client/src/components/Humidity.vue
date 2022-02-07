@@ -1,13 +1,40 @@
 <template>
-  <div id="humidity" class="p-2 rounded shadow bg-white"></div>
+  <div :class="this.addClass()" id="humidity"></div>
 </template>
 
 <script>
 import {host, socket} from "@/main";
 import Anychart from "anychart"
+import moment from "moment";
 
 export default {
   name: "Humidity",
+  props: [
+    "device",
+    "time",
+  ],
+  watch: {
+    device: function(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        const elem = document.getElementById("humidity")
+        if (elem.childNodes.length > 0) {
+          elem.removeChild(elem.childNodes[0])
+        }
+        this.chart = Anychart.line()
+        this.init(newVal, this.time)
+      }
+    },
+    time: function(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        const elem = document.getElementById("humidity")
+        if (elem.childNodes.length > 0) {
+          elem.removeChild(elem.childNodes[0])
+        }
+        this.chart = Anychart.line()
+        this.init(this.device, newVal)
+      }
+    },
+  },
   data() {
     return {
       records: [],
@@ -16,11 +43,13 @@ export default {
     }
   },
   methods: {
-    init() {
+    init(d, t) {
       this.axios.get(host + "/temperatureHumidity")
           .then(res => {
             this.records = res.data
                 //.filter(r => !this.temperature.data().map(t => t.time).includes(r.time.toLocaleString().slice(11, 19)))
+                .filter(r => r.device === d)
+                .filter(r => moment(r.time).isBetween(moment(t.startTime), moment(t.endTime)))
                 .sort((a,b) => a.time - b.time)
             this.humidity = Anychart.data.set(this.records.map(r => {
               return [
@@ -28,7 +57,9 @@ export default {
                 r.humidity
               ]
             }))
-            this.plotChart()
+            if (d !== "") {
+              this.plotChart()
+            }
           })
     },
     plotChart() {
@@ -42,16 +73,22 @@ export default {
       this.chart.container("humidity")
       this.chart.height(400)
       this.chart.title("Humidity")
-      series.color("#1E8120")
+      series.color("#bbdefb")
       this.chart.draw()
+    },
+    addClass() {
+      return `p-md-2 rounded shadow bg-white ${this.device === '' ? 'invisible' : ''}`
     },
   },
   mounted: function() {
     socket.on("tempHumidity", (msg) => {
-      this.humidity.append([msg.time.toLocaleString().slice(11, 19), msg.humidity])
+      if (msg.device === this.device &&
+          moment(msg.time).isBetween(moment(this.time.startTime), moment(this.time.endTime))) {
+        this.humidity.append([msg.time.toLocaleString().slice(11, 19), msg.humidity])
+      }
       //this.temperature.append([msg.time.toLocaleString().slice(11, 19), msg.temperature])
     })
-    this.init()
+    this.init("", this.time)
     //setInterval(this.init, 10000)
   },
 }

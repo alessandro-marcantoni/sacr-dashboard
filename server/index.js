@@ -17,6 +17,37 @@ mongoose.connect(process.env.VC19_MONGODB_URL)
 
 const TempHumidity = require("./models/TempHumidity")(mongoose)
 const AirQuality = require("./models/AirQuality")(mongoose)
+const Room = require("./models/Room")(mongoose)
+
+const handleTemperatureHumidity = (payload) => {
+  const record = new TempHumidity(payload)
+  record.save((error, _) => {
+    if (error) console.error(error);
+  })
+  io.emit("tempHumidity", {
+    device: payload.device,
+    time: payload.time,
+    temperature: payload.temperature,
+    humidity: payload.humidity,
+  })
+}
+
+const handleAirQuality = (payload) => {
+  const record = new AirQuality(payload)
+  record.save((error, _) => {
+    if (error) console.error(error);
+  })
+  io.emit("airQuality", {
+    device: payload.device,
+    time: payload.time,
+    concentration: payload.concentration,
+  })
+}
+
+const actions = {
+  "temperature_humidity": handleTemperatureHumidity,
+  "air_quality": handleAirQuality
+}
 
 io.on("connection", socket => {
   console.log("User connected to socket " + socket)
@@ -35,33 +66,12 @@ const device = awsIoT.device({
 
 device.on('connect', () => {
   console.log('Thing connected')
-  device.subscribe("temperature_humidity")
-  device.subscribe("air_quality")
+  device.subscribe("+/temperature_humidity")
+  device.subscribe("+/air_quality")
 })
 
 device.on('message', (topic, payload) => {
-  if (topic === "temperature_humidity") {
-    const r = JSON.parse(payload.toString())
-    const record = new TempHumidity(r)
-    /*record.save((error, _error) => {
-      if (error) console.error(error);
-    })*/
-    io.emit("tempHumidity", {
-      time: r.time,
-      temperature: r.temperature,
-      humidity: r.humidity,
-    })
-  } else if (topic === "air_quality") {
-    const r = JSON.parse(payload.toString())
-    const record = new AirQuality(r)
-    record.save((error, _error) => {
-      if (error) console.error(error);
-    })
-    io.emit("airQuality", {
-      time: r.time,
-      concentration: r.concentration,
-    })
-  }
+  actions[`${Object.keys(actions).find(k => topic.includes(k))}`](JSON.parse(payload.toString()))
   console.log('message', topic, payload.toString());
 })
 
@@ -83,6 +93,12 @@ app.get("/temperatureHumidity", (_req, res) => {
 
 app.get("/airQuality", (_req, res) => {
   AirQuality.find({}, (_error, result) => {
+    res.json(result)
+  })
+})
+
+app.get("/rooms", (_req, res) => {
+  Room.find({}, (_error, result) => {
     res.json(result)
   })
 })

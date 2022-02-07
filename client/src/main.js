@@ -10,3 +10,4 @@ export const socket = io(host)
 createApp(App)
     .use(VueAxios, axios)
     .mount('#app')
+//app.config.globalProperties.$device = ""
